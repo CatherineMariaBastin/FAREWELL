@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farewell — Countdown</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #ffffff;
+      --line: #c5dff8;
+      --margin: #f4a7a7;
+      --ink: #1a1a2e;
+      --red: #d94f4f;
+      --pencil: #5c5c7a;
+      --blue-ink: #2243a8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #d6d0c8;
+      background-image:
+        radial-gradient(ellipse at 30% 20%, #ccc5bc 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 80%, #bfb8af 0%, transparent 55%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      font-family: 'Patrick Hand', cursive;
+    }
+
+    /* ── NOTEBOOK ── */
+    .notebook {
+      position: relative;
+      width: min(660px, 100%);
+      background: var(--paper);
+      border-radius: 3px 10px 10px 3px;
+      box-shadow:
+        -5px 0 0 #bdb5a8,
+        -9px 0 0 #aaa29a,
+        5px 10px 40px rgba(0,0,0,0.22),
+        0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+      animation: slideIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Ruled lines background */
+    .ruled-bg {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        transparent,
+        transparent 31px,
+        var(--line) 31px,
+        var(--line) 32px
+      );
+      background-position: 0 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Margin line */
+    .margin-line {
+      position: absolute;
+      left: 72px;
+      top: 0; bottom: 0;
+      width: 1.5px;
+      background: var(--margin);
+      opacity: 0.7;
+      z-index: 1;
+    }
+
+    /* Binding strip */
+    .binding {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 52px;
+      background: #e8e2da;
+      border-right: 1px solid #cfc8bf;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+      padding: 2.5rem 0;
+    }
+    .hole {
+      width: 16px; height: 16px;
+      background: #d6d0c8;
+      border-radius: 50%;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.5);
+    }
+
+    /* Content area */
+    .page {
+      position: relative;
+      z-index: 3;
+      padding: 2.5rem 2.8rem 2.5rem 5.5rem;
+      min-height: 100%;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.3rem;
+      animation: fadeIn 0.5s ease 0.2s both;
+    }
+
+    .navajyothi-tag {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--pencil);
+      opacity: 0.6;
+      padding-top: 2px;
+    }
+
+    .date-stamp {
+      font-family: 'Caveat', cursive;
+      font-size: 0.8rem;
+      color: var(--red);
+      opacity: 0.7;
+      transform: rotate(1deg);
+      display: inline-block;
+    }
+
+    /* ── FAREWELL TITLE ── */
+    .farewell-wrap {
+      margin: 0.4rem 0 0;
+      animation: fadeIn 0.5s ease 0.35s both;
+    }
+
+    .farewell-title {
+      font-family: 'Caveat', cursive;
+      font-size: clamp(4rem, 14vw, 6.5rem);
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      display: block;
+    }
+
+    /* Hand-drawn underline SVG */
+    .squiggle { display: block; width: 100%; margin-top: 3px; max-width: 320px; }
+
+    /* ── DIVIDER ── */
+    .hand-rule {
+      margin: 1.4rem 0 1.2rem;
+      opacity: 0.12;
+      animation: fadeIn 0.5s ease 0.5s both;
+    }
+
+    /* ── COUNTDOWN LABEL ── */
+    .cd-label {
+      font-family: 'Caveat', cursive;
+      font-size: 1rem;
+      color: var(--red);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      animation: fadeIn 0.5s ease 0.55s both;
+    }
+    .cd-label .arr {
+      display: inline-block;
+      animation: nudge 1.1s ease-in-out infinite;
+    }
+    @keyframes nudge { 0%,100%{transform:translateX(0);} 50%{transform:translateX(5px);} }
+
+    /* ── TIMER ── */
+    .timer {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.6rem;
+      animation: fadeIn 0.5s ease 0.65s both;
+    }
+
+    .time-block { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+
+    .time-box {
+      width: 100%;
+      aspect-ratio: 1.05;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      position: relative;
+      background: var(--paper);
+    }
+
+    /* Notebook box: ruled lines show through + hand-drawn border */
+    .time-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 5px;
+      background-image: repeating-linear-gradient(
+        transparent, transparent 15px, rgba(197, 223, 248, 0.6) 15px, rgba(197, 223, 248, 0.6) 16px
+      );
+    }
+
+    .time-box svg.box-border {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      overflow: visible;
+    }
+
+    .time-val {
+      font-family: 'Caveat', cursive;
+      font-size: clamp(2.2rem, 6vw, 3.4rem);
+      font-weight: 700;
+      color: var(--blue-ink);
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+      transition: transform 0.12s ease;
+    }
+    .time-val.bump { transform: scale(1.12); }
+
+    .time-lbl {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 0.58rem;
+      color: var(--pencil);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.65;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── INFO CARDS (sticky-note style) ── */
+    .info-row {
+      display: flex;
+      gap: 0.9rem;
+      flex-wrap: wrap;
+      animation: fadeIn 0.5s ease 0.8s both;
+    }
+
+    .info-card {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.6rem 0.9rem 0.55rem;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    /* lined paper effect inside card */
+    .info-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      background-image: repeating-linear-gradient(
+        transparent, transparent 17px, rgba(197, 223, 248, 0.5) 17px, rgba(197, 223, 248, 0.5) 18px
+      );
+    }
+
+    .card-a {
+      background: #fffde7;
+      box-shadow: 2px 3px 0 rgba(0,0,0,0.1), inset 0 -2px 0 rgba(0,0,0,0.04);
+      transform: rotate(-0.6deg);
+    }
+    .card-b {
+      background: #fce4ec;
+      box-shadow: 2px 3px 0 rgba(0,0,0,0.1), inset 0 -2px 0 rgba(0,0,0,0.04);
+      transform: rotate(0.4deg);
+    }
+
+    .ic-label {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--pencil);
+      opacity: 0.7;
+      position: relative;
+      z-index: 1;
+    }
+    .ic-val {
+      font-family: 'Caveat', cursive;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--ink);
+      position: relative;
+      z-index: 1;
+      margin-top: 1px;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 1.4rem;
+      animation: fadeIn 0.5s ease 0.95s both;
+    }
+
+    .theme-teaser {
+      font-family: 'Caveat', cursive;
+      font-size: 0.82rem;
+      color: var(--pencil);
+      font-style: italic;
+      opacity: 0.55;
+    }
+
+    .pg-num {
+      font-family: 'Caveat', cursive;
+      font-size: 0.75rem;
+      color: var(--pencil);
+      opacity: 0.3;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .page { padding: 2rem 1.6rem 2rem 4.5rem; }
+      .timer { gap: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="notebook">
+  <div class="ruled-bg"></div>
+  <div class="margin-line"></div>
+  <div class="binding">
+    <div class="hole"></div>
+    <div class="hole"></div>
+    <div class="hole"></div>
+    <div class="hole"></div>
+    <div class="hole"></div>
+    <div class="hole"></div>
+    <div class="hole"></div>
+  </div>
+
+  <div class="page">
+
+    <!-- Header row -->
+    <div class="header">
+      <span class="navajyothi-tag">✏ Navajyothi Hostel</span>
+      <span class="date-stamp">April 2026</span>
+    </div>
+
+    <!-- Title -->
+    <div class="farewell-wrap">
+      <span class="farewell-title">Farewell.</span>
+      <svg class="squiggle" height="9" viewBox="0 0 340 9" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0,5 Q28,9 56,5 Q84,1 112,5 Q140,9 168,5 Q196,1 224,5 Q252,9 280,5 Q308,1 336,5" stroke="#d94f4f" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- Hand rule -->
+    <svg class="hand-rule" width="100%" height="4" viewBox="0 0 500 4" preserveAspectRatio="none">
+      <path d="M0,2 Q125,3.5 250,2 Q375,0.5 500,2" stroke="#1a1a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <!-- Countdown label -->
+    <div class="cd-label">
+      Theme drops in <span class="arr">→</span>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer">
+      <div class="time-block">
+        <div class="time-box">
+          <svg class="box-border" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <rect x="3" y="3" width="94" height="94" rx="5" ry="5"
+              fill="none" stroke="#1a1a2e" stroke-width="2"
+              stroke-dasharray="none"
+              style="paint-order:stroke"/>
+          </svg>
+          <span class="time-val" id="days">00</span>
+          <span class="time-lbl">Days</span>
+        </div>
+      </div>
+      <div class="time-block">
+        <div class="time-box">
+          <svg class="box-border" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <rect x="3" y="3" width="94" height="94" rx="5" ry="5" fill="none" stroke="#1a1a2e" stroke-width="2"/>
+          </svg>
+          <span class="time-val" id="hours">00</span>
+          <span class="time-lbl">Hours</span>
+        </div>
+      </div>
+      <div class="time-block">
+        <div class="time-box">
+          <svg class="box-border" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <rect x="3" y="3" width="94" height="94" rx="5" ry="5" fill="none" stroke="#1a1a2e" stroke-width="2"/>
+          </svg>
+          <span class="time-val" id="minutes">00</span>
+          <span class="time-lbl">Mins</span>
+        </div>
+      </div>
+      <div class="time-block">
+        <div class="time-box">
+          <svg class="box-border" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <rect x="3" y="3" width="94" height="94" rx="5" ry="5" fill="none" stroke="#1a1a2e" stroke-width="2"/>
+          </svg>
+          <span class="time-val" id="seconds">00</span>
+          <span class="time-lbl">Secs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info cards -->
+    <div class="info-row">
+      <div class="info-card card-a">
+        <div class="ic-label">Theme Reveal</div>
+        <div class="ic-val">📅 23rd April, 12 PM</div>
+      </div>
+      <div class="info-card card-b">
+        <div class="ic-label">Farewell Night</div>
+        <div class="ic-val">🌟 30th April</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span class="theme-teaser">* theme name to be revealed...</span>
+      <span class="pg-num">pg. 1</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const revealDate = new Date('2026-04-23T12:00:00');
+  function pad(n){ return String(n).padStart(2, '0'); }
+
+  function bump(id) {
+    const el = document.getElementById(id);
+    el.classList.add('bump');
+    setTimeout(() => el.classList.remove('bump'), 150);
+  }
+
+  let prev = {};
+  function tick() {
+    const diff = revealDate - new Date();
+    if (diff <= 0) {
+      window.location.href = "Masquerade.html";
+      return;
+    }
+    const d = pad(Math.floor(diff / 86400000));
+    const h = pad(Math.floor((diff % 86400000) / 3600000));
+    const m = pad(Math.floor((diff % 3600000) / 60000));
+    const s = pad(Math.floor((diff % 60000) / 1000));
+
+    if (d !== prev.d) { document.getElementById('days').textContent = d; if(prev.d) bump('days'); prev.d = d; }
+    if (h !== prev.h) { document.getElementById('hours').textContent = h; if(prev.h) bump('hours'); prev.h = h; }
+    if (m !== prev.m) { document.getElementById('minutes').textContent = m; if(prev.m) bump('minutes'); prev.m = m; }
+    if (s !== prev.s) { document.getElementById('seconds').textContent = s; if(prev.s) bump('seconds'); prev.s = s; }
+  }
+  tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>
